@@ -1,31 +1,37 @@
 <#
 .SYNOPSIS
-    This script lists all Active Directory (AD) computers, including their operating system and last logon date.
+    This script moves files older than a specified number of days from the Downloads folder to an Archive directory.
 
 .DESCRIPTION
-    The script retrieves all computers from Active Directory and displays their name, operating system, and last logon date.
-    It uses the `Get-ADComputer` cmdlet, which requires the Remote Server Administration Tools (RSAT) to be installed.
-    If RSAT is not installed, the script catches the error and provides instructions on how to install RSAT.
+    The script identifies files in the user's Downloads folder that have not been modified in a specified number of days (default is 30 days).
+    It preserves the directory structure when moving files to an Archive subfolder within the Downloads directory.
+    The script provides a list of the files to be moved and prompts the user for confirmation before proceeding.
 
 .EXAMPLE
-    PS> .\ListADComputers.ps1
-    Active Directory Computers:
-    Name            OperatingSystem            LastLogonDate
-    ----            ----------------            -------------
-    PC1             Windows 10 Pro              2023-09-25
-    SERVER01        Windows Server 2019         2023-09-24
-    
-    Finished script at '2024-09-25 12:34:56Z'. Took '00:00:05.1234567' to run.
+    PS> .\MoveOldFiles.ps1
+    Source Path: C:\Users\Username\Downloads
+    Archive Path: C:\Users\Username\Downloads\Archive
+    The following files are older than 30 days and will be moved to the specified archive directory.
+
+    FullName                            LastWriteTime         
+    --------                            -------------         
+    C:\Users\Username\Downloads\File1.txt 2023-08-10 14:32:16
+    C:\Users\Username\Downloads\Folder\File2.jpg 2023-08-01 11:45:12
+
+    Do you want to move these files? (Y/N)
 
 .DETAILS
-    The script will attempt to retrieve AD computers with the `Get-ADComputer` cmdlet. If an error occurs, likely due to 
-    missing RSAT, the script outputs a helpful message with a link to install RSAT for Windows 11.
+    - The script uses a WinAPI call to retrieve the path to the Downloads folder.
+    - It recursively checks all files and folders within the Downloads directory.
+    - The destination is an "Archive" folder within the Downloads directory.
+    - Folder structure is maintained during the move operation.
+    - If no files older than the specified number of days are found, the script outputs a message and exits.
 
 .Output
-    Table: Outputs a table of Active Directory computer details, including Name, Operating System, and Last Logon Date.
+    String: Outputs the file paths of old files and confirms the move operation.
 
 .LINK
-    https://techcommunity.microsoft.com/t5/windows-11/how-to-install-or-uninstall-rsat-in-windows-11/m-p/3273590
+    N/A
 
 .AUTHOR
     tranquilcarbon
@@ -61,25 +67,38 @@ write-host "Archive Path: $ArchiveDir"
 write-host "Please wait while files are analysed. This may a take a few minutes"
 write-host "Depending on how many files are in your download directory."
 
-# Get the list of files older than $DaysOld
+# Get the list of files older than $DaysOld, excluding the ArchiveDir
 $OldFiles = Get-ChildItem -Path $SourceDir -Recurse |
-    Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-$DaysOld) }
+    Where-Object { 
+        $_.LastWriteTime -lt (Get-Date).AddDays(-$DaysOld) -and
+        $_.FullName -notlike "$ArchiveDir*"
+    }
 
 # Check if any files match the criteria
 if ($OldFiles.Count -eq 0) {
     Write-Host "No files found older than $DaysOld days."
 } else {
     # List the files that will be moved
-    Write-Host "The following files are older than $DaysOld days and will be moved to the archive folder:`n"
+    Write-Host "The following files are older than $DaysOld days and will be moved to the specified archive directory.`n"
     $OldFiles | Select-Object FullName, LastWriteTime | Format-Table -AutoSize
 
     # Ask for confirmation
     $Confirmation = Read-Host "Do you want to move these files? (Y/N)"
 
     if ($Confirmation -eq "Y") {
-        # Move the files
-        $OldFiles | ForEach-Object {
-            Move-Item -Path $_.FullName -Destination $ArchiveDir -Force
+        foreach ($File in $OldFiles) {
+            # Construct the destination path while maintaining folder structure
+            $RelativePath = $File.FullName.Substring($SourceDir.Length)
+            $DestinationPath = Join-Path $ArchiveDir $RelativePath
+
+            # Ensure the destination folder exists
+            $DestinationFolder = Split-Path $DestinationPath
+            if (-not (Test-Path $DestinationFolder)) {
+                New-Item -ItemType Directory -Path $DestinationFolder -Force | Out-Null
+            }
+
+            # Move the file to the destination, preserving folder structure
+            Move-Item -Path $File.FullName -Destination $DestinationPath -Force
         }
         Write-Host "Files have been successfully moved."
     } else {
