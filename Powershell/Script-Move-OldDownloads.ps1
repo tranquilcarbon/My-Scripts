@@ -35,7 +35,7 @@
 
 .AUTHOR
     tranquilcarbon
-    Date: 2025/09/2024
+    Date: 25/09/2024
 #>
 
 # Get the download folder location using WinAPI
