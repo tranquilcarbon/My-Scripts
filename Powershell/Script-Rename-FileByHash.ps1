@@ -30,7 +30,6 @@
     Your Name
 #>
 
-
 # Prompt the user to enter a folder path
 $folderPath = Read-Host -Prompt "Enter the folder path"
 
@@ -74,6 +73,16 @@ foreach ($file in $files) {
         $filePath = $file.FullName
         # Calculate the SHA256 hash of the file
         $hash = Get-SHA256Hash -filePath $filePath
+
+        # Get the current file name without extension for comparison
+        $currentFileName = [System.IO.Path]::GetFileNameWithoutExtension($file.FullName)
+
+        # Check if the file is already named with its SHA256 hash
+        if ($currentFileName -eq $hash) {
+            Write-Host "File '$filePath' is already named with its SHA256 hash. Skipping..." -ForegroundColor Blue
+            continue
+        }
+
         # Get the directory of the file
         $directory = $file.DirectoryName
         # Get the file extension
@@ -84,10 +93,11 @@ foreach ($file in $files) {
 
         # Rename the file (works on both Windows and non-Windows environments)
         Rename-Item -Path $filePath -NewName $newFilePath -ErrorAction Stop
-        Write-Host "Renamed '$filePath' to '$newFilePath'"
+        Write-Host "Original filename:  '$filePath'" -ForegroundColor Yellow
+        Write-Host "Renamed to:         '$newFilePath'" -ForegroundColor Green
     }
     catch {
-        Write-Host "Failed to rename file: $filePath. Error: $_"
+        Write-Host "Failed to rename file: $filePath. Error: $_" -ForegroundColor Red
     }
 }
 
