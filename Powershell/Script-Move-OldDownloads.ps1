@@ -13,7 +13,7 @@
     Archive Path: C:\Users\Username\Downloads\Archive
     The following files are older than 30 days and will be moved to the specified archive directory.
 
-    FullName                            LastWriteTime         
+    FullName                            LastAccessTime         
     --------                            -------------         
     C:\Users\Username\Downloads\File1.txt 2023-08-10 14:32:16
     C:\Users\Username\Downloads\Folder\File2.jpg 2023-08-01 11:45:12
@@ -70,7 +70,7 @@ write-host "Depending on how many files are in your download directory."
 # Get the list of files older than $DaysOld, excluding the ArchiveDir
 $OldFiles = Get-ChildItem -Path $SourceDir -Recurse |
     Where-Object { 
-        $_.LastWriteTime -lt (Get-Date).AddDays(-$DaysOld) -and
+        $_.LastAccessTime -lt (Get-Date).AddDays(-$DaysOld) -and
         $_.FullName -notlike "$ArchiveDir*"
     }
 
@@ -80,7 +80,7 @@ if ($OldFiles.Count -eq 0) {
 } else {
     # List the files that will be moved
     Write-Host "The following files are older than $DaysOld days and will be moved to the specified archive directory.`n"
-    $OldFiles | Select-Object FullName, LastWriteTime | Format-Table -AutoSize
+    $OldFiles | Select-Object FullName, LastAccessTime | Format-Table -AutoSize
 
     # Ask for confirmation
     $Confirmation = Read-Host "Do you want to move these files? (Y/N)"
