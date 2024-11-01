@@ -30,6 +30,9 @@
     Your Name
 #>
 
+#Import System.Security to allow for cryptographic hashing
+Add-Type -AssemblyName System.Security
+
 # Prompt the user to enter a folder path
 $folderPath = Read-Host -Prompt "Enter the folder path"
 
