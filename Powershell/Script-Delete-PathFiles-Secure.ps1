@@ -80,7 +80,7 @@ function SecurelyDelete-Files {
     foreach ($file in $files) {
         $filePath = $file.FullName
         try {
-            & $sdeletePath -f $filePath
+            & $sdeletePath -p 7 -f $filePath    # Context: 7 Passes is typical for secure deletion
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "Successfully deleted: $filePath" -ForegroundColor Green
             } else {
