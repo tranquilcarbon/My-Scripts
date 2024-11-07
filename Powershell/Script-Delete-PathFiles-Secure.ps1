@@ -40,96 +40,60 @@ For a more secure wipe, look for one using the DoD 5220.22 M standard, or simila
 
 
 # Function to securely overwrite a file
-function Secure-Delete {    # Unapproved function verb, but there's no better way to name it.
-    param (
-        [string]$FilePath,
-        [int]$OverwriteTimes = 3
-        # For reference:
-        # Quick 
-    )
+# Define the path to sdelete.exe (change this if you've moved it)
+$sdeletePath = "C:\Programs\sdelete.exe"
 
-    # Define overwrite patterns
-    $patterns = @(
-        '1234567890',
-        'abcdefghij',
-        '!@#$%^&*()',
-        '<>/?`~!@#',
-        'qwertyuiop',
-        'asdfghjkl',
-        'zxcvbnm,./'
-    )
-
-    # Read the file content
-    try {
-        $content = Get-Content -Path $FilePath -Raw
-    } catch {
-        Write-Error "Failed to read file: $_"
-        return
-    }
-
-    # Overwrite the file multiple times
-    for ($i = 0; $i -lt $OverwriteTimes; $i++) {
-        try {
-            Set-Content -Path $FilePath -Value ($patterns[$i % $patterns.Length] * ([math]::Ceiling($content.Length / $patterns[$i % $patterns.Length].Length)))
-        } catch {
-            Write-Error "Failed to overwrite file: $_"
-            return
-        }
-    }
-
-    # Delete the file
-    try {
-        Remove-Item -Path $FilePath -Force
-        Write-Host "File deleted and securely overwritten: $FilePath"
-    } catch {
-        Write-Error "Failed to delete file: $_"
-    }
-}
-
-# Function to recursively get all files in a folder
-function Get-AllFiles {
+# Function to securely delete files using sdelete
+function SecurelyDelete-Files {
     param (
         [string]$FolderPath
     )
 
-    $allFiles = @()
-    try {
-        Get-ChildItem -Path $FolderPath -Recurse -Force | Where-Object { -not $_.PSIsContainer } | ForEach-Object {
-            $allFiles += $_.FullName
-        }
-    } catch {
-        Write-Error "Failed to get files: $_"
+    # Check if the folder exists
+    if (-Not (Test-Path -Path $FolderPath -PathType Container)) {
+        Write-Host "Error: The folder '$FolderPath' does not exist." -ForegroundColor Red
+        return
     }
 
-    return $allFiles
+    # Get a list of files in the directory
+    $files = Get-ChildItem -Path $FolderPath -File
+
+    if ($files.Count -eq 0) {
+        Write-Host "No files found in the specified folder." -ForegroundColor Yellow
+        return
+    }
+
+    # Display the list of files to be deleted
+    Write-Host "Files to be deleted:" -ForegroundColor Green
+    foreach ($file in $files) {
+        Write-Host $file.FullName -ForegroundColor Cyan
+    }
+
+    # Prompt for confirmation before proceeding
+    $confirmation = Read-Host "Are you sure you want to delete these files? (y/n)"
+    if ($confirmation.ToLower() -ne 'y') {
+        Write-Host "Operation cancelled by user." -ForegroundColor Yellow
+        return
+    }
+
+    # Loop through each file and securely delete it using sdelete
+    foreach ($file in $files) {
+        $filePath = $file.FullName
+        try {
+            & $sdeletePath -f $filePath
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "Successfully deleted: $filePath" -ForegroundColor Green
+            } else {
+                Write-Host "Failed to delete: $filePath. Error code: $LASTEXITCODE" -ForegroundColor Red
+            }
+        } catch {
+            Write-Host "Error deleting file: $filePath. $_" -ForegroundColor Red
+        }
+    }
+
+    Write-Host "Deletion process completed." -ForegroundColor Green
 }
 
-# Main script logic
-$folderPath = Read-Host "Enter the folder path"
-
-# Confirm with the user
-if (-not (Read-Host "Are you sure you want to delete all files in '$folderPath' and its subfolders? (Yes/No)")) {
-    Write-Host "Operation cancelled."
-    exit
-}
-
-# Get a list of all files
-$allFiles = Get-AllFiles -FolderPath $folderPath
-
-# List all files for confirmation
-Write-Host "Files that will be deleted:"
-foreach ($file in $allFiles) {
-    Write-Host "$file"
-}
-
-if (-not (Read-Host "Confirm the deletion of these files? (Yes/No)")) {
-    Write-Host "Operation cancelled."
-    exit
-}
-
-# Delete and securely overwrite each file
-foreach ($file in $allFiles) {
-    Secure-Delete -FilePath $file
-}
-
-Write-Host "All files have been deleted and securely overwritten."
+# Main script execution
+$FolderPath = Read-Host "Enter the path of the folder containing files to delete"
+SecurelyDelete-Files -FolderPath $FolderPath
