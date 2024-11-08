@@ -27,7 +27,8 @@
     N/A
 
 .AUTHOR
-    Your Name
+    tranquilcarbon
+    Date: 08/11/24
 #>
 
 #Import System.Security to allow for cryptographic hashing
