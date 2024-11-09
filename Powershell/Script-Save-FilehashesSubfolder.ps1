@@ -92,10 +92,14 @@ foreach ($file in Get-ChildItem -Path $directoryPath -File -Recurse) {
                 $hashFilePath = Join-Path -Path $file.DirectoryName -ChildPath ($file.BaseName + $hashTypes[$hashType])
                 $hash | Out-File -FilePath $hashFilePath -Encoding UTF8
 
-                Write-Host "Hash for $($file.Name) using $hashType saved to $hashFilePath" -ForegroundColor Green
+                Write-Host "File hash created."  -ForegroundColor Green
+                Write-host "File name: $($file.Name)"  -ForegroundColor Green
+                Write-Host "Hash name: $($hashFilePath)"  -ForegroundColor Green
+                Write-Host "Hash type: $($hashType)"  -ForegroundColor Green
+                Write-Host "Hash: $($hash)"  -ForegroundColor Green
             }
         }
     } else {
-        Write-Host "$($file.Name) ignored because it has a hash file extension." -ForegroundColor Yellow
+        Write-Host "$($file.Name) ignored because it already has a hash file extension." -ForegroundColor Yellow
     }
 }
