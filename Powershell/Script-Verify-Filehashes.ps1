@@ -3,7 +3,7 @@ $directoryPath = Read-Host -Prompt "Enter the full path of the directory contain
 
 # Check if the path exists
 if (!(Test-Path -Path $directoryPath)) {
-    Write-Host "The directory does not exist. Exiting..."
+    Write-Host "The directory does not exist. Exiting..." -ForegroundColor Yellow
     exit
 }
 
@@ -13,6 +13,15 @@ $hashTypes = @{
     "SHA1"   = ".sha1"
     "SHA256" = ".sha256"
     "SHA512" = ".sha512"
+}
+
+# Prompt user to choose the hash type or to check all
+$selectedHashType = Read-Host -Prompt "Enter the hash type to verify (MD5, SHA1, SHA256, SHA512) or 'ALL' to check all"
+
+# Validate the selected hash type
+if ($selectedHashType.ToUpper() -ne "ALL" -and -not $hashTypes.ContainsKey($selectedHashType.ToUpper())) {
+    Write-Host "Invalid hash type selected. Exiting..." -ForegroundColor Yellow
+    exit
 }
 
 # Function to calculate hash for a file using a specified algorithm
@@ -31,9 +40,16 @@ $filesToCheck = Get-ChildItem -Path $directoryPath -File | Where-Object {
     $_.Extension -notin $hashTypes.Values
 }
 
-# Verify each file's hash
+# Verify each file's hash based on user selection
 foreach ($file in $filesToCheck) {
-    foreach ($hashType in $hashTypes.Keys) {
+    # Determine which hash types to verify based on user input
+    $hashesToCheck = if ($selectedHashType.ToUpper() -eq "ALL") {
+        $hashTypes.Keys  # Check all hash types
+    } else {
+        @($selectedHashType.ToUpper())  # Check only the selected hash type
+    }
+
+    foreach ($hashType in $hashesToCheck) {
         # Construct the expected hash file path
         $hashFilePath = Join-Path -Path $directoryPath -ChildPath ($file.BaseName + $hashTypes[$hashType])
 
