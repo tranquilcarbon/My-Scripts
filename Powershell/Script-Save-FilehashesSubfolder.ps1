@@ -44,15 +44,6 @@ if (!(Test-Path -Path $directoryPath)) {
     exit
 }
 
-# Prompt the user for the directory path
-$directoryPath = Read-Host -Prompt "Enter the full path of the directory"
-
-# Check if the path exists
-if (!(Test-Path -Path $directoryPath)) {
-    Write-Host "The directory does not exist. Exiting..." -ForegroundColor Red
-    exit
-}
-
 # Define a function to calculate hashes
 function Get-FileHashWithAlgorithm {
     param (
@@ -80,15 +71,29 @@ $ignoredExtensions = @(".md5", ".sha1", ".sha256", ".sha512")
 foreach ($file in Get-ChildItem -Path $directoryPath -File -Recurse) {
     # Check if the file extension is not in the list of ignored extensions
     if ($ignoredExtensions -notcontains $file.Extension.ToLower()) {
+        $allHashFilesExist = $true
+
         foreach ($hashType in $hashTypes.Keys) {
-            # Generate the hash
-            $hash = Get-FileHashWithAlgorithm -filePath $file.FullName -algorithm $hashType
-
-            # Save the hash to a file with the appropriate extension
             $hashFilePath = Join-Path -Path $file.DirectoryName -ChildPath ($file.BaseName + $hashTypes[$hashType])
-            $hash | Out-File -FilePath $hashFilePath -Encoding UTF8
+            if (!(Test-Path -Path $hashFilePath)) {
+                $allHashFilesExist = $false
+                break
+            }
+        }
 
-            Write-Host "Hash for $($file.Name) using $hashType saved to $hashFilePath" -ForegroundColor Green
+        if ($allHashFilesExist) {
+            Write-Host "$($file.Name) already has all hashes. Skipping..." -ForegroundColor Yellow
+        } else {
+            foreach ($hashType in $hashTypes.Keys) {
+                # Generate the hash
+                $hash = Get-FileHashWithAlgorithm -filePath $file.FullName -algorithm $hashType
+
+                # Save the hash to a file with the appropriate extension
+                $hashFilePath = Join-Path -Path $file.DirectoryName -ChildPath ($file.BaseName + $hashTypes[$hashType])
+                $hash | Out-File -FilePath $hashFilePath -Encoding UTF8
+
+                Write-Host "Hash for $($file.Name) using $hashType saved to $hashFilePath" -ForegroundColor Green
+            }
         }
     } else {
         Write-Host "$($file.Name) ignored because it has a hash file extension." -ForegroundColor Yellow
