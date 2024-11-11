@@ -36,6 +36,7 @@ https://en.wikipedia.org/wiki/Hash_function
 #>
 
 # Prompt the user for the directory path
+# Prompt the user for the directory path
 $directoryPath = Read-Host -Prompt "Enter the full path of the directory"
 
 # Check if the path exists

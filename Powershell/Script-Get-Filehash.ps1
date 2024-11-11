@@ -39,16 +39,6 @@
 #>
 
 # Function to calculate CRC32 hash
-function Get-CRC32 {
-    param (
-        [string]$FilePath
-    )
-
-    $crc32 = new-object System.Security.Cryptography.Crc32
-    $buffer = [System.IO.File]::ReadAllBytes($FilePath)
-    $crc32.ComputeHash($buffer) | ForEach-Object { $_.ToString("X2") }
-}
-
 # Function to calculate MD5 hash
 function Get-MD5 {
     param (
@@ -117,7 +107,6 @@ try {
     }
 
     # Display hash values
-    Write-Host "CRC32 (Insecure): $(Get-CRC32 -FilePath $filePath)"
     Write-Host "MD5 (Insecure): $(Get-MD5 -FilePath $filePath)"
     Write-Host "SHA-1 (Insecure): $(Get-SHA1 -FilePath $filePath)"
     Write-Host "SHA-256: $(Get-SHA256 -FilePath $filePath)"

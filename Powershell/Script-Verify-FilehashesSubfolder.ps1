@@ -55,8 +55,9 @@ function Process-Directory {
         }
 
         foreach ($hashType in $hashesToCheck) {
-            # Construct the expected hash file path
-            $hashFilePath = Join-Path -Path $path -ChildPath ($file.BaseName + $hashTypes[$hashType])
+            # Construct the expected hash file path using the new naming convention
+            $fileNameNoExt = Split-Path -Path $file.FullName -LeafBase
+            $hashFilePath = Join-Path -Path $path -ChildPath ("$fileNameNoExt-$($hashTypes[$hashType].Replace(".", "-"))")
 
             # Check if the hash file exists
             if (Test-Path -Path $hashFilePath) {
@@ -69,15 +70,15 @@ function Process-Directory {
 
                 # Compare the calculated hash with the stored hash
                 if ($calculatedHash -eq $storedHash) {
-                    Write-Host "[$hashType] Hash for $($file.FullName) is VALID." -ForegroundColor Green
+                    Write-Host "[$hashType] Hash for $($file.Name) is VALID." -ForegroundColor Green
                 } else {
-                    Write-Host "[$hashType] Hash for $($file.FullName) is INVALID." -ForegroundColor Red
+                    Write-Host "[$hashType] Hash for $($file.Name) is INVALID." -ForegroundColor Red
                     Write-Host "File hash was: [$storedHash]" -ForegroundColor Red
                     Write-Host "Real hash was: [$CalculatedHash]" -ForegroundColor Red
                     Write-Host "File potentially corrupt or has been tampered with." -ForegroundColor Red
                 }
             } else {
-                Write-Host "No $hashType hash file found for $($file.FullName)" -ForegroundColor Yellow
+                Write-Host "No $hashType hash file found for $($file.Name)" -ForegroundColor Yellow
             }
         }
     }
