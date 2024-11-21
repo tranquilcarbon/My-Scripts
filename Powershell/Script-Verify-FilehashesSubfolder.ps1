@@ -1,8 +1,3 @@
-# Create variables
-$HashMatches = 0    # Increments with every hash verification.
-$HashMismatches = 0 # Increments with every hash that doesn't match it's hash.
-$HashNotFound = 0   # Increments with every hash that isn't found.
-
 # Prompt the user for the directory path
 $directoryPath = Read-Host -Prompt "Enter the full path of the directory containing files and hash files"
 
@@ -75,18 +70,14 @@ function Process-Directory {
                 # Compare the calculated hash with the stored hash
                 if ($calculatedHash -eq $storedHash) {
                     Write-Host "[$hashType] Hash for $($file.Name) is VALID." -ForegroundColor Green
-
-                    $HashMatches++
                 } else {
                     Write-Host "[$hashType] Hash for $($file.Name) is INVALID." -ForegroundColor Red
                     Write-Host "File hash was: [$storedHash]" -ForegroundColor Red
                     Write-Host "Real hash was: [$CalculatedHash]" -ForegroundColor Red
                     Write-Host "File potentially corrupt or has been tampered with." -ForegroundColor Red
-                    $HashMismatches++
                 }
             } else {
                 Write-Host "No $hashType hash file found for $($file.Name)" -ForegroundColor Yellow
-                $HashNotFound++
             }
         }
     }
@@ -95,12 +86,7 @@ function Process-Directory {
     Get-ChildItem -Path $path -Directory | ForEach-Object {
         Process-Directory -path $_.FullName
     }
-    Write-Host "$HashMatches total hashes verified successfully." -ForegroundColor DarkGreen -BackgroundColor White
-    
-    Write-Host "$HashMismatches total hashes verified unsuccessfully." -ForegroundColor DarkRed -BackgroundColor White
-    Write-Host "$HashNotFound files did not have hashes." -ForegroundColor DarkYellow -BackgroundColor White
 }
 
 # Start processing from the user-specified directory
 Process-Directory -path $directoryPath
-
