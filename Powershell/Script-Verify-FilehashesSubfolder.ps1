@@ -70,14 +70,18 @@ function Process-Directory {
                 # Compare the calculated hash with the stored hash
                 if ($calculatedHash -eq $storedHash) {
                     Write-Host "[$hashType] Hash for $($file.Name) is VALID." -ForegroundColor Green
+                    Write-Host "File hash was: [$storedHash]" -ForegroundColor Green
+                    Write-Host "Real hash was: [$CalculatedHash]" -ForegroundColor Green
+                    Write-Host "Result: VERIFY_SUCCESS"
                 } else {
                     Write-Host "[$hashType] Hash for $($file.Name) is INVALID." -ForegroundColor Red
                     Write-Host "File hash was: [$storedHash]" -ForegroundColor Red
                     Write-Host "Real hash was: [$CalculatedHash]" -ForegroundColor Red
-                    Write-Host "File potentially corrupt or has been tampered with." -ForegroundColor Red
+                    Write-Host "Result: VERIFY_FAIL" -ForegroundColor Red
                 }
             } else {
                 Write-Host "No $hashType hash file found for $($file.Name)" -ForegroundColor Yellow
+                Write-Host "Result: NO_HASH_FOUND" -ForegroundColor Yellow
             }
         }
     }
@@ -88,5 +92,16 @@ function Process-Directory {
     }
 }
 
+# Start transcript to capture output, Why? because we can't mirror the output
+# from the terminal to the text file without transcripting, because powershell
+# and likes causing pain, especially for me.
+Start-Transcript -Path "output.txt" -UseMinimalHeader
+
+# After a hour of trying to find out what line would work, I wonder what my
+# blood pressure is?
+
 # Start processing from the user-specified directory
 Process-Directory -path $directoryPath
+
+# Stop transcript after processing is complete
+Stop-Transcript
