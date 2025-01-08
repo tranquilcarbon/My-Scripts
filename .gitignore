@@ -1,3 +1,7 @@
 
 Powershell/sync.ffs_db
 /.vscode
+Python/localkey.py
+/.idea
+/Python/__pycache__
+Python/script-IA-Upload.py
